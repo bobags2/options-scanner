@@ -1,0 +1,26 @@
+[api]
+# tradier_api_key = "your-key-here"
+# alpha_vantage_api_key = "your-key-here"
+yahoo_requests_per_hour = 2000
+tradier_requests_per_hour = 120
+
+[cache]
+price_ttl_seconds = 300
+chain_ttl_seconds = 900
+sqlite_path = "data/cache.db"
+
+[scanner]
+sp500_csv_path = "data/sp500.csv"
+watch_interval_seconds = 900
+
+[strategies.unusual_volume]
+min_volume_oi_ratio = 2.0
+min_volume = 100
+
+[strategies.iv_crush]
+min_iv_percentile = 80.0
+max_days_to_earnings = 7
+
+[strategies.wheel]
+target_delta = 0.3
+min_annualized_premium = 15.0

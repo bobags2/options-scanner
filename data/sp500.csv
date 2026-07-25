@@ -1,0 +1,142 @@
+Symbol,Name
+AAPL,Apple Inc
+MSFT,Microsoft Corp
+NVDA,NVIDIA Corp
+AMZN,Amazon.com Inc
+META,Meta Platforms Inc
+GOOGL,Alphabet Inc
+GOOG,Alphabet Inc
+BRK-B,Berkshire Hathaway
+TSLA,Tesla Inc
+LLY,Eli Lilly
+AVGO,Broadcom Inc
+WMT,Walmart Inc
+JPM,JPMorgan Chase
+V,Visa Inc
+UNH,UnitedHealth Group
+XOM,Exxon Mobil
+MA,Mastercard Inc
+PG,Procter & Gamble
+JNJ,Johnson & Johnson
+COST,Costco Wholesale
+HD,Home Depot
+ABBV,AbbVie Inc
+MRK,Merck & Co
+CVX,Chevron Corp
+KO,Coca-Cola Co
+PEP,PepsiCo Inc
+TMO,Thermo Fisher
+WFC,Wells Fargo
+CSCO,Cisco Systems
+ACN,Accenture
+DIS,Walt Disney Co
+MCD,McDonald's Corp
+ABT,Abbott Labs
+LIN,Linde plc
+CRM,Salesforce Inc
+ADBE,Adobe Inc
+AMD,Advanced Micro
+TXN,Texas Instruments
+QCOM,Qualcomm Inc
+INTU,Intuit Inc
+IBM,Intl Business Machines
+CAT,Caterpillar Inc
+GE,GE Aerospace
+NOW,ServiceNow Inc
+AMAT,Applied Materials
+ISRG,Intuitive Surgical
+INTC,Intel Corp
+BKNG,Booking Holdings
+MU,Micron Technology
+PLTR,Palantir Tech
+AMGN,Amgen Inc
+DE,Deere & Co
+LRCX,Lam Research
+TJX,TJX Companies
+PANW,Palo Alto Networks
+KLAC,KLA Corp
+VRTX,Vertex Pharma
+SYK,Stryker Corp
+REGN,Regeneron Pharma
+ADP,Automated Data
+MDLZ,Mondelez Intl
+GILD,Gilead Sciences
+ADI,Analog Devices
+MMC,Marsh McLennan
+CI,Cigna Group
+CB,Chubb Ltd
+BSX,Boston Scientific
+FI,Fiserv Inc
+SO,Southern Co
+LMT,Lockheed Martin
+MO,Altria Group
+DUK,Duke Energy
+NEE,NextEra Energy
+UNP,Union Pacific
+RTX,RTX Corp
+SCHW,Charles Schwab
+HON,Honeywell Intl
+LOW,Lowe's Companies
+NKE,Nike Inc
+UPS,United Parcel
+PM,Philip Morris
+BMY,Bristol-Myers
+SBUX,Starbucks Corp
+ORCL,Oracle Corp
+SPY,SPDR S&P 500 ETF
+QQQ,Invesco QQQ Trust
+IWM,iShares Russell 2000
+DIA,SPDR Dow Jones
+EWZ,iShares MSCI Brazil
+FXI,iShares China Large-Cap
+XLF,Financial Select Sector
+XLE,Energy Select Sector
+XLK,Technology Select Sector
+XLV,Health Care Select
+XLI,Industrial Select
+TQQQ,ProShares UltraPro QQQ
+UVXY,ProShares Ultra VIX
+TLT,iShares 20+ Year Treasury
+GLD,SPDR Gold Shares
+SLV,iShares Silver Trust
+USO,United States Oil Fund
+ARKK,ARK Innovation ETF
+VIXY,ProShares VIX Short-Term
+SMCI,Super Micro Computer
+COIN,Coinbase Global
+MSTR,MicroStrategy
+SNAP,Snap Inc
+RIVN,Rivian Automotive
+SOFI,SoFi Technologies
+HOOD,Robinhood Markets
+PYPL,PayPal Holdings
+SQ,Block Inc
+UBER,Uber Technologies
+ABNB,Airbnb Inc
+CRWD,CrowdStrike
+DDOG,Datadog Inc
+MDB,MongoDB Inc
+ZS,Zscaler Inc
+NET,Cloudflare Inc
+OKTA,Okta Inc
+SNOW,Snowflake Inc
+RBLX,Roblox Corp
+U,Unity Software
+SHOP,Shopify Inc
+MELI,MercadoLibre
+BABA,Alibaba Group
+JD,JD.com Inc
+NIO,NIO Inc
+LI,Li Auto Inc
+XPEV,XPeng Inc
+BIT,Bit Digital
+MARA,Marathon Digital
+RIOT,Riot Platforms
+LSCC,Lattice Semiconductor
+ARM,Arm Holdings
+MRVL,Marvell Technology
+ON,ON Semiconductor
+WOLF,Wolfspeed Inc
+FSLR,First Solar Inc
+ENPH,Enphase Energy
+SEDG,SolarEdge Tech
