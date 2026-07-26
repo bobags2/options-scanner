@@ -134,7 +134,10 @@ async fn scan_tickers_with_progress(
     let strats = Arc::new(all_strategies());
     let rfr = cfg.scanner.risk_free_rate;
     let strat_cfg = cfg.strategies.clone();
-    let sem = Arc::new(Semaphore::new(15));
+    let min_dte = cfg.scanner.min_dte as i64;
+    let max_dte = cfg.scanner.max_dte as i64;
+    let concurrency = cfg.scanner.concurrency;
+    let sem = Arc::new(Semaphore::new(concurrency));
     let mut handles = Vec::new();
 
     for t in tickers {
@@ -144,14 +147,14 @@ async fn scan_tickers_with_progress(
         let strat_cfg = strat_cfg.clone();
         let sem = sem.clone();
         let progress = progress.clone();
-
         handles.push(tokio::spawn(async move {
             let _permit = sem.acquire().await.unwrap();
             let mut opps = Vec::new();
 
             let (price, exps) = match provider.get_price_and_expirations(&t).await {
                 Ok(pa) => pa,
-                Err(_) => {
+                Err(e) => {
+                    tracing::warn!(ticker = %t, error = %e, "failed to fetch price/expirations");
                     if let Some(p) = &progress { p.fetch_add(1, Ordering::Relaxed); }
                     return opps;
                 }
@@ -161,15 +164,16 @@ async fn scan_tickers_with_progress(
             let useful: Vec<_> = exps.iter()
                 .filter(|e| {
                     let dte = (**e - today).num_days();
-                    dte >= 7 && dte <= 90
+                    dte >= min_dte && dte <= max_dte
                 })
                 .take(6)
                 .collect();
 
             let mut chains = Vec::new();
             for exp in useful {
-                if let Ok(chain) = provider.get_option_chain(&t, *exp).await {
-                    chains.push(chain);
+                match provider.get_option_chain(&t, *exp).await {
+                    Ok(chain) => chains.push(chain),
+                    Err(e) => tracing::debug!(ticker = %t, expiration = %exp, error = %e, "chain fetch failed"),
                 }
             }
 
@@ -397,11 +401,18 @@ async fn run_tui_loop(
     let (tx, mut rx) = mpsc::channel::<Vec<Opportunity>>(1);
 
     loop {
-        if let Ok(opps) = rx.try_recv() {
-            let count = opps.len();
-            app.opportunities = opps;
-            app.scan_in_progress = false;
-            app.status_message = format!("Found {} opportunities. Press 's' to rescan.", count);
+        // Non-blocking check for completed scan results.
+        match rx.try_recv() {
+            Ok(opps) => {
+                let count = opps.len();
+                app.opportunities = opps;
+                app.scan_in_progress = false;
+                app.status_message = format!("Found {} opportunities. Press 's' to rescan.", count);
+            }
+            Err(mpsc::error::TryRecvError::Empty) => {}
+            Err(mpsc::error::TryRecvError::Disconnected) => {
+                app.scan_in_progress = false;
+            }
         }
 
         terminal.draw(|frame| {

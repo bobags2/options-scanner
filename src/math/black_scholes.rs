@@ -1,9 +1,9 @@
 use statrs::distribution::{Continuous, ContinuousCDF, Normal};
+use std::sync::LazyLock;
 use crate::types::{Greeks, OptionType};
 
-fn norm() -> Normal {
-    Normal::new(0.0, 1.0).unwrap()
-}
+// Constructing a Normal involves table lookups; cache it process-wide.
+static NORM: LazyLock<Normal> = LazyLock::new(|| Normal::new(0.0, 1.0).unwrap());
 
 pub struct BsInputs {
     pub s: f64,
@@ -25,7 +25,7 @@ pub fn bs_price(i: &BsInputs) -> f64 {
     let sq = t.sqrt();
     let d1 = ((s / k).ln() + (r + 0.5 * sigma * sigma) * t) / (sigma * sq);
     let d2 = d1 - sigma * sq;
-    let n = norm();
+    let n = &*NORM;
     match opt_type {
         OptionType::Call => s * n.cdf(d1) - k * (-r * t).exp() * n.cdf(d2),
         OptionType::Put => k * (-r * t).exp() * n.cdf(-d2) - s * n.cdf(-d1),
@@ -51,7 +51,7 @@ pub fn bs_price_with_greeks(i: &BsInputs) -> (f64, Greeks) {
     let sq = t.sqrt();
     let d1 = ((s / k).ln() + (r + 0.5 * sigma * sigma) * t) / (sigma * sq);
     let d2 = d1 - sigma * sq;
-    let n = norm();
+    let n = &*NORM;
     let nd1 = n.pdf(d1);
     let price = match opt_type {
         OptionType::Call => s * n.cdf(d1) - k * (-r * t).exp() * n.cdf(d2),

@@ -53,7 +53,7 @@ impl Strategy for ButterflyStrategy {
 
             let atm_strike = calls.iter()
                 .min_by(|a, b| {
-                    (a.strike - underlying).abs().partial_cmp(&(b.strike - underlying).abs()).unwrap()
+                    (a.strike - underlying).abs().total_cmp(&(b.strike - underlying).abs())
                 })
                 .map(|c| c.strike);
             let atm = match atm_strike {
@@ -149,7 +149,7 @@ impl Strategy for ButterflyStrategy {
             });
         }
 
-        opps.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
+        opps.sort_by(|a, b| b.score.total_cmp(&a.score));
         opps.truncate(50);
         opps
     }

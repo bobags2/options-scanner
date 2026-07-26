@@ -1,7 +1,9 @@
 use statrs::distribution::{Continuous, Normal};
+use std::sync::LazyLock;
 use crate::types::OptionType;
 use super::black_scholes::{bs_price, BsInputs};
 
+static NORM: LazyLock<Normal> = LazyLock::new(|| Normal::new(0.0, 1.0).unwrap());
 pub fn implied_volatility(
     market_price: f64,
     s: f64,
@@ -21,7 +23,7 @@ pub fn implied_volatility(
         return None;
     }
     let mut sigma = 0.5_f64;
-    let n = Normal::new(0.0, 1.0).unwrap();
+    let n = &*NORM;
     for _ in 0..100 {
         let price = bs_price(&BsInputs { s, k, t, r, sigma, opt_type });
         let diff = price - market_price;

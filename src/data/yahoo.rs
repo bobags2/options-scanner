@@ -100,8 +100,8 @@ impl YahooProvider {
                         if retry.status().is_success() {
                             return Ok(retry);
                         }
-                        last_err = Some(anyhow::anyhow!("Yahoo returned {} after auth retry", retry.status()));
-                        continue;
+                        // Auth retry failed — don't keep looping with a bad crumb.
+                        return Err(anyhow::anyhow!("Yahoo returned {} after auth retry", retry.status()));
                     }
                     if status.as_u16() == 429 || status.is_server_error() {
                         last_err = Some(anyhow::anyhow!("Yahoo returned {}", status));

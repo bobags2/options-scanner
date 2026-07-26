@@ -206,7 +206,7 @@ impl Strategy for SpreadStrategy {
             }
         }
 
-        opps.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
+        opps.sort_by(|a, b| b.score.total_cmp(&a.score));
         opps.truncate(50);
         opps
     }

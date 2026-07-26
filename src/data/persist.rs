@@ -5,6 +5,9 @@ use std::path::Path;
 use crate::types::Opportunity;
 
 pub fn init_db(path: &Path) -> Result<Connection> {
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)?;
+    }
     let conn = Connection::open(path)?;
     conn.execute_batch(
         "CREATE TABLE IF NOT EXISTS scan_results (
@@ -35,10 +38,11 @@ pub fn init_db(path: &Path) -> Result<Connection> {
 
 pub fn save_opportunities(conn: &Connection, opps: &[Opportunity]) -> Result<usize> {
     let now = chrono::Utc::now().to_rfc3339();
+    let tx = conn.unchecked_transaction()?;
     let mut count = 0;
 
     for opp in opps {
-        conn.execute(
+        tx.execute(
             "INSERT INTO scan_results (scanned_at, strategy, ticker, option_type, strike, expiration, score, volume, open_interest, implied_volatility, delta, gamma, theta, vega, explanation, risk_summary)
              VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15, ?16)",
             params![
@@ -63,6 +67,7 @@ pub fn save_opportunities(conn: &Connection, opps: &[Opportunity]) -> Result<usi
         count += 1;
     }
 
+    tx.commit()?;
     Ok(count)
 }
 

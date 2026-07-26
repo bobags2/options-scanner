@@ -11,7 +11,10 @@ pub fn create_limiter(requests_per_hour: u32) -> Arc<Limiter> {
 }
 
 pub async fn wait_for_permit(limiter: &Limiter) {
+    // Poll check() with short tokio sleep — yields to the executor without
+    // relying on governor's DefaultClock (which uses std::thread::sleep internally
+    // and would block the tokio runtime thread if used via until_ready()).
     while limiter.check().is_err() {
-        tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+        tokio::time::sleep(std::time::Duration::from_millis(10)).await;
     }
 }

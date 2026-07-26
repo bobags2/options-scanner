@@ -67,7 +67,7 @@ impl Strategy for CalendarStrategy {
                 let atm_strike = near_chain.contracts.iter()
                     .filter(|c| c.option_type == OptionType::Call)
                     .min_by(|a, b| {
-                        (a.strike - underlying).abs().partial_cmp(&(b.strike - underlying).abs()).unwrap()
+                        (a.strike - underlying).abs().total_cmp(&(b.strike - underlying).abs())
                     })
                     .map(|c| c.strike);
 
@@ -185,7 +185,7 @@ impl Strategy for CalendarStrategy {
             }
         }
 
-        opps.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
+        opps.sort_by(|a, b| b.score.total_cmp(&a.score));
         opps.truncate(50);
         opps
     }

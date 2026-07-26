@@ -1,11 +1,15 @@
 use async_trait::async_trait;
 use chrono::Utc;
+use std::sync::LazyLock;
 
 use crate::config::StrategiesConfig;
+use crate::data::earnings::{fetch_earnings_date, is_earnings_before_expiration, EarningsCache};
 use crate::math::black_scholes::{bs_price_with_greeks, BsInputs};
 use crate::math::iv_rank::compute_iv_stats;
 use crate::types::{Opportunity, OptionChain, StrategyType, UnderlyingPrices};
 use super::Strategy;
+
+static EARNINGS_CACHE: LazyLock<EarningsCache> = LazyLock::new(EarningsCache::new);
 
 pub struct IvCrushStrategy;
 
@@ -43,6 +47,9 @@ impl Strategy for IvCrushStrategy {
                 Some(p) => *p,
                 None => continue,
             };
+
+            // Fetch earnings date once per ticker for IV-crush context.
+            let earnings_date = fetch_earnings_date(&chain.ticker, &EARNINGS_CACHE).await.ok().flatten();
 
             if all_ivs.is_empty() {
                 continue;
@@ -96,8 +103,14 @@ impl Strategy for IvCrushStrategy {
                     None => String::new(),
                 };
 
+                let earnings_note = if is_earnings_before_expiration(earnings_date, c.expiration) {
+                    " Upcoming earnings fall before expiration — a classic IV-crush catalyst."
+                } else {
+                    ""
+                };
+
                 let explanation = format!(
-                    "This {} {} option has an IV of {:.1}%, which is {:.1} standard deviations above the chain average of {:.1}%.{} \
+                    "This {} {} option has an IV of {:.1}%, which is {:.1} standard deviations above the chain average of {:.1}%.{}{} \
                      High IV inflates option premiums. After an event (earnings, FDA decision), IV typically 'crushes' back toward normal, \
                      deflating the option price. This makes it attractive for selling (credit spreads, strangles) if you expect the stock to stay range-bound.",
                     c.ticker,
@@ -106,6 +119,7 @@ impl Strategy for IvCrushStrategy {
                     z_score,
                     avg_iv * 100.0,
                     iv_rank_info,
+                    earnings_note,
                 );
 
                 let risk = format!(
@@ -127,7 +141,7 @@ impl Strategy for IvCrushStrategy {
             }
         }
 
-        opps.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap());
+        opps.sort_by(|a, b| b.score.total_cmp(&a.score));
         opps.truncate(50);
         opps
     }
