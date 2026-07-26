@@ -254,6 +254,12 @@ impl Config {
     }
 
     pub fn load_or_default(path: &str) -> Self {
-        Self::load(path).unwrap_or_default()
+        match Self::load(path) {
+            Ok(cfg) => cfg,
+            Err(e) => {
+                eprintln!("Warning: could not load config from '{}': {}. Using defaults.", path, e);
+                Self::default()
+            }
+        }
     }
 }
