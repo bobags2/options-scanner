@@ -1,6 +1,6 @@
-Add IV term structure detection (contango/backwardation)
+Bulk earnings fetch: pre-warm global cache before scan loop
 
-- New math::term_structure module computes ATM IV slope across expirations
-- Calendar strategy boosts score +15 in backwardation, enriches explanation
-- IV Crush strategy includes term structure note when available
-- Re-export TermStructure and detect_term_structure from math module
+- Add global_earnings_cache() accessor in data::earnings
+- New bulk_fetch_earnings() fetches all tickers in parallel
+- IvCrush strategy uses shared cache instead of its own static
+- main.rs prefetches before spawning per-ticker scan tasks

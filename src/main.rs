@@ -146,6 +146,14 @@ async fn scan_tickers_with_progress(
     let max_dte = cfg.scanner.max_dte as i64;
     let concurrency = cfg.scanner.concurrency;
     let sem = Arc::new(Semaphore::new(concurrency));
+    // Pre-fetch earnings dates for all tickers in parallel, warming the
+    // global cache so IvCrush strategy lookups are instant cache hits
+    // instead of sequential Yahoo API calls.
+    {
+        use options_scanner::data::earnings::{bulk_fetch_earnings, global_earnings_cache};
+        let prefetch_concurrency = concurrency.min(tickers.len());
+        bulk_fetch_earnings(tickers, global_earnings_cache(), prefetch_concurrency).await;
+    }
     let mut handles = Vec::new();
 
     for t in tickers {

@@ -49,7 +49,7 @@ impl Strategy for IvCrushStrategy {
             };
 
             // Fetch earnings date once per ticker for IV-crush context.
-            let earnings_date = fetch_earnings_date(&chain.ticker, &EARNINGS_CACHE).await.ok().flatten();
+            let earnings_date = fetch_earnings_date(&chain.ticker, global_earnings_cache()).await.ok().flatten();
             // Detect IV term structure — backwardation is a strong IV-crush signal.
             let term_summary = crate::math::detect_term_structure(
                 &[chain.clone()], underlying, today,
