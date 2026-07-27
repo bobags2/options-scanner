@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 use options_scanner::config::Config;
 use options_scanner::data::{DataProvider, YahooProvider, TradierProvider, CachedProvider};
-use options_scanner::strategies::all_strategies;
+use options_scanner::strategies::{all_strategies, Strategy};
 use options_scanner::tui::app::{App, View};
 use options_scanner::types::Opportunity;
 
@@ -117,14 +117,16 @@ async fn refresh_sp500_tickers(csv_path: &std::path::Path) -> anyhow::Result<()>
 async fn scan_tickers(
     tickers: &[String],
     cfg: &Config,
+    strategy_filter: Option<String>,
 ) -> Vec<Opportunity> {
-    scan_tickers_with_progress(tickers, cfg, None).await
+    scan_tickers_with_progress(tickers, cfg, None, strategy_filter).await
 }
 
 async fn scan_tickers_with_progress(
     tickers: &[String],
     cfg: &Config,
     progress: Option<Arc<AtomicUsize>>,
+    strategy_filter: Option<String>,
 ) -> Vec<Opportunity> {
     let provider: Arc<dyn DataProvider> = if let Some(key) = &cfg.api.tradier_api_key {
         Arc::new(CachedProvider::new(
@@ -139,7 +141,19 @@ async fn scan_tickers_with_progress(
             cfg.cache.chain_ttl_seconds,
         ))
     };
-    let strats = Arc::new(all_strategies());
+    let all = all_strategies();
+    let strats: Vec<Box<dyn Strategy>> = if let Some(ref filter) = strategy_filter {
+        let filter_lower = filter.to_lowercase();
+        all.into_iter().filter(|s| s.name().to_lowercase().contains(&filter_lower)).collect()
+    } else {
+        all
+    };
+    if strats.is_empty() {
+        let valid: Vec<&str> = all_strategies().iter().map(|s| s.name()).collect();
+        tracing::warn!("No strategies match filter '{}'. Available: {:?}", strategy_filter.as_deref().unwrap_or(""), valid);
+        return Vec::new();
+    }
+    let strats = Arc::new(strats);
     let rfr = cfg.scanner.risk_free_rate;
     let strat_cfg = cfg.strategies.clone();
     let min_dte = cfg.scanner.min_dte as i64;
@@ -249,11 +263,15 @@ enum Commands {
         top: usize,
         #[arg(short, long, help = "Export results to file (.json or .csv)")]
         output: Option<String>,
+        #[arg(long, help = "Run only this strategy (case-insensitive substring match)")]
+        strategy: Option<String>,
     },
     /// Launch the interactive TUI
     Tui {
         #[arg(short, long, value_delimiter = ',', help = "Specific tickers (default: scan full universe)")]
         ticker: Vec<String>,
+        #[arg(long, help = "Run only this strategy (case-insensitive substring match)")]
+        strategy: Option<String>,
     },
     /// Refresh S&P 500 ticker list from Wikipedia
     RefreshTickers,
@@ -266,21 +284,21 @@ async fn main() -> anyhow::Result<()> {
     let cfg = Config::load_or_default(&cli.config);
 
     match cli.command {
-        Commands::Scan { ticker, top, output } => {
+        Commands::Scan { ticker, top, output, strategy } => {
             let tickers = if ticker.is_empty() {
                 load_ticker_universe(&cfg.scanner.sp500_csv_path)
             } else {
                 ticker
             };
-            run_scan(&tickers, top, &cfg, output.as_deref()).await?;
+            run_scan(&tickers, top, &cfg, output.as_deref(), strategy).await?;
         }
-        Commands::Tui { ticker } => {
+        Commands::Tui { ticker, strategy } => {
             let tickers = if ticker.is_empty() {
                 load_ticker_universe(&cfg.scanner.sp500_csv_path)
             } else {
                 ticker
             };
-            run_tui(&tickers, &cfg).await?;
+            run_tui(&tickers, &cfg, strategy).await?;
         }
         Commands::RefreshTickers => {
             refresh_sp500_tickers(&cfg.scanner.sp500_csv_path).await?;
@@ -290,7 +308,7 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn run_scan(tickers: &[String], top_n: usize, cfg: &Config, output: Option<&str>) -> anyhow::Result<()> {
+async fn run_scan(tickers: &[String], top_n: usize, cfg: &Config, output: Option<&str>, strategy_filter: Option<String>) -> anyhow::Result<()> {
     println!("Scanning {} tickers with all strategies...", tickers.len());
 
     let progress = Arc::new(AtomicUsize::new(0));
@@ -301,8 +319,9 @@ async fn run_scan(tickers: &[String], top_n: usize, cfg: &Config, output: Option
         let tickers = tickers.to_vec();
         let cfg = cfg.clone();
         let progress = progress.clone();
+        let strategy_filter = strategy_filter.clone();
         tokio::spawn(async move {
-            scan_tickers_with_progress(&tickers, &cfg, Some(progress)).await
+            scan_tickers_with_progress(&tickers, &cfg, Some(progress), strategy_filter).await
         })
     };
 
@@ -386,8 +405,7 @@ async fn run_scan(tickers: &[String], top_n: usize, cfg: &Config, output: Option
 
     Ok(())
 }
-
-async fn run_tui(tickers: &[String], cfg: &Config) -> anyhow::Result<()> {
+async fn run_tui(tickers: &[String], cfg: &Config, strategy_filter: Option<String>) -> anyhow::Result<()> {
     enable_raw_mode()?;
     let mut stdout = io::stdout();
     execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
@@ -395,11 +413,11 @@ async fn run_tui(tickers: &[String], cfg: &Config) -> anyhow::Result<()> {
     let mut terminal = Terminal::new(backend)?;
 
     let mut app = App::new();
-
     let tickers_owned: Vec<String> = tickers.to_vec();
     let cfg_clone = cfg.clone();
+    let strategy_filter_clone = strategy_filter.clone();
 
-    let result = run_tui_loop(&mut terminal, &mut app, &tickers_owned, &cfg_clone).await;
+    let result = run_tui_loop(&mut terminal, &mut app, &tickers_owned, &cfg_clone, strategy_filter_clone).await;
 
     disable_raw_mode()?;
     execute!(
@@ -411,12 +429,12 @@ async fn run_tui(tickers: &[String], cfg: &Config) -> anyhow::Result<()> {
 
     result
 }
-
 async fn run_tui_loop(
     terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
     app: &mut App,
     tickers: &[String],
     cfg: &Config,
+    strategy_filter: Option<String>,
 ) -> anyhow::Result<()> {
     let (tx, mut rx) = mpsc::channel::<Vec<Opportunity>>(1);
 
@@ -480,13 +498,13 @@ async fn run_tui_loop(
                     }
                     KeyCode::Char('s') => {
                         if !app.scan_in_progress {
-                            app.scan_in_progress = true;
                             app.status_message = format!("Scanning {} tickers...", tickers.len());
                             let tickers_clone = tickers.to_vec();
                             let cfg_clone = cfg.clone();
+                            let strategy_filter_clone = strategy_filter.clone();
                             let tx = tx.clone();
                             tokio::spawn(async move {
-                                let opps = scan_tickers(&tickers_clone, &cfg_clone).await;
+                                let opps = scan_tickers(&tickers_clone, &cfg_clone, strategy_filter_clone).await;
                                 let _ = tx.send(opps).await;
                             });
                         }
