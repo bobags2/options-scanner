@@ -11,6 +11,9 @@ pub struct Config {
     pub scanner: ScannerConfig,
     #[serde(default)]
     pub strategies: StrategiesConfig,
+    #[serde(default)]
+    pub alerts: AlertsConfig,
+
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -166,7 +169,14 @@ pub struct RatioSpreadConfig {
     #[serde(default = "default_rs_min_ratio")]
     pub min_ratio: f64,
 }
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct AlertsConfig {
+    pub webhook_url: Option<String>,
+    #[serde(default = "default_alert_threshold")]
+    pub alert_threshold: f64,
+}
 
+fn default_alert_threshold() -> f64 { 75.0 }
 fn default_yahoo_rate_limit() -> u32 { 2000 }
 fn default_tradier_rate_limit() -> u32 { 120 }
 fn default_price_ttl() -> u64 { 300 }
@@ -209,6 +219,7 @@ impl Default for Config {
             cache: CacheConfig::default(),
             scanner: ScannerConfig::default(),
             strategies: StrategiesConfig::default(),
+            alerts: AlertsConfig::default(),
         }
     }
 }

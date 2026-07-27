@@ -25,3 +25,8 @@ max_days_to_earnings = 7
 [strategies.wheel]
 target_delta = 0.3
 min_annualized_premium = 15.0
+
+[alerts]
+# webhook_url = "https://discord.com/api/webhooks/your-webhook-url"
+# webhook_url = "https://api.telegram.org/bot<token>/sendMessage?chat_id=<id>"
+alert_threshold = 75.0

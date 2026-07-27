@@ -348,6 +348,10 @@ async fn run_scan(tickers: &[String], top_n: usize, cfg: &Config, output: Option
         }
     }
 
+    if let Some(url) = &cfg.alerts.webhook_url {
+        options_scanner::alerts::send_alerts(url, &all_opps, cfg.alerts.alert_threshold).await;
+    }
+
     if let Some(path) = output {
         use std::io::Write;
         if path.ends_with(".json") {

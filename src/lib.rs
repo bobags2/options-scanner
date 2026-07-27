@@ -4,3 +4,4 @@ pub mod config;
 pub mod data;
 pub mod strategies;
 pub mod tui;
+pub mod alerts;
