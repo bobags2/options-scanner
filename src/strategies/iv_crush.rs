@@ -1,15 +1,13 @@
 use async_trait::async_trait;
 use chrono::Utc;
-use std::sync::LazyLock;
 
 use crate::config::StrategiesConfig;
-use crate::data::earnings::{fetch_earnings_date, is_earnings_before_expiration, EarningsCache};
+use crate::data::earnings::{fetch_earnings_date, global_earnings_cache, is_earnings_before_expiration};
 use crate::math::black_scholes::{bs_price_with_greeks, BsInputs};
 use crate::math::iv_rank::compute_iv_stats;
 use crate::types::{Opportunity, OptionChain, StrategyType, UnderlyingPrices};
 use super::Strategy;
 
-static EARNINGS_CACHE: LazyLock<EarningsCache> = LazyLock::new(EarningsCache::new);
 
 pub struct IvCrushStrategy;
 

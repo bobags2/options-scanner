@@ -1,6 +1,0 @@
-Bulk earnings fetch: pre-warm global cache before scan loop
-
-- Add global_earnings_cache() accessor in data::earnings
-- New bulk_fetch_earnings() fetches all tickers in parallel
-- IvCrush strategy uses shared cache instead of its own static
-- main.rs prefetches before spawning per-ticker scan tasks
