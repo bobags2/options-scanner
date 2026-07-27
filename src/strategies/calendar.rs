@@ -41,6 +41,12 @@ impl Strategy for CalendarStrategy {
         let mut sorted: Vec<_> = chains.iter().collect();
         sorted.sort_by_key(|c| c.expiration);
 
+        // Detect IV term structure across sorted expirations.
+        let owned_chains: Vec<OptionChain> = sorted.iter().map(|c| (*c).clone()).collect();
+        let term = crate::math::detect_term_structure(&owned_chains, underlying, today);
+        let in_backwardation = term.as_ref().map(|t| t.is_backwardation()).unwrap_or(false);
+        let term_summary = term.as_ref().map(|t| t.summary()).unwrap_or_default();
+
         for (i, near_chain) in sorted.iter().enumerate() {
             let near_dte = near_chain.contracts.first()
                 .map(|c| c.days_to_expiration(today))
@@ -131,9 +137,14 @@ impl Strategy for CalendarStrategy {
                     continue;
                 }
 
-                let score = (net_theta / long_leg.mid_price() * 1000.0).min(40.0)
+                let mut score = (net_theta / long_leg.mid_price() * 1000.0).min(40.0)
                     + (iv_diff * 100.0).min(30.0).max(0.0)
                     + (1.0 - debit_pct / 3.0) * 30.0;
+                if in_backwardation {
+                    // Backwardation (near IV > far IV) is the ideal regime for
+                    // calendars — the short leg is richer than the long one.
+                    score += 15.0;
+                }
 
                 let explanation = format!(
                     "Calendar spread on {}: sell the {} ${:.0} call (${:.2}), buy the {} ${:.0} call (${:.2}). \
@@ -152,7 +163,7 @@ impl Strategy for CalendarStrategy {
                     chains[0].ticker,
                     strike,
                     dte_gap,
-                );
+                ) + &term_summary;
 
                 let risk = format!(
                     "Max loss: ${:.2}/share (${:.0}/contract) if {} moves far from ${:.0}. \

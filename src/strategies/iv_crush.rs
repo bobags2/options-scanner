@@ -50,6 +50,10 @@ impl Strategy for IvCrushStrategy {
 
             // Fetch earnings date once per ticker for IV-crush context.
             let earnings_date = fetch_earnings_date(&chain.ticker, &EARNINGS_CACHE).await.ok().flatten();
+            // Detect IV term structure — backwardation is a strong IV-crush signal.
+            let term_summary = crate::math::detect_term_structure(
+                &[chain.clone()], underlying, today,
+            ).map(|t| t.summary()).unwrap_or_default();
 
             if all_ivs.is_empty() {
                 continue;
@@ -120,7 +124,7 @@ impl Strategy for IvCrushStrategy {
                     avg_iv * 100.0,
                     iv_rank_info,
                     earnings_note,
-                );
+                ) + &term_summary;
 
                 let risk = format!(
                     "If IV doesn't crush or the stock moves significantly, short options can lose money. Theta is {:.3}/day (time decay helps). \

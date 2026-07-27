@@ -1,1 +1,6 @@
-Add webhook alerts for Discord, Telegram, and generic webhooks
+Add IV term structure detection (contango/backwardation)
+
+- New math::term_structure module computes ATM IV slope across expirations
+- Calendar strategy boosts score +15 in backwardation, enriches explanation
+- IV Crush strategy includes term structure note when available
+- Re-export TermStructure and detect_term_structure from math module
