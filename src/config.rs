@@ -17,6 +17,8 @@ pub struct Config {
 pub struct ApiConfig {
     pub tradier_api_key: Option<String>,
     pub alpha_vantage_api_key: Option<String>,
+    #[serde(default)]
+    pub tradier_sandbox: bool,
     #[serde(default = "default_yahoo_rate_limit")]
     pub yahoo_requests_per_hour: u32,
     #[serde(default = "default_tradier_rate_limit")]

@@ -1,6 +1,6 @@
 use clap::{Parser, Subcommand};
 use options_scanner::config::Config;
-use options_scanner::data::{DataProvider, YahooProvider, CachedProvider};
+use options_scanner::data::{DataProvider, YahooProvider, TradierProvider, CachedProvider};
 use options_scanner::strategies::all_strategies;
 use options_scanner::tui::app::{App, View};
 use options_scanner::types::Opportunity;
@@ -126,11 +126,19 @@ async fn scan_tickers_with_progress(
     cfg: &Config,
     progress: Option<Arc<AtomicUsize>>,
 ) -> Vec<Opportunity> {
-    let provider = Arc::new(CachedProvider::new(
-        YahooProvider::with_rate_limit(cfg.api.yahoo_requests_per_hour),
-        cfg.cache.price_ttl_seconds,
-        cfg.cache.chain_ttl_seconds,
-    ));
+    let provider: Arc<dyn DataProvider> = if let Some(key) = &cfg.api.tradier_api_key {
+        Arc::new(CachedProvider::new(
+            TradierProvider::new(key, cfg.api.tradier_sandbox, cfg.api.tradier_requests_per_hour),
+            cfg.cache.price_ttl_seconds,
+            cfg.cache.chain_ttl_seconds,
+        ))
+    } else {
+        Arc::new(CachedProvider::new(
+            YahooProvider::with_rate_limit(cfg.api.yahoo_requests_per_hour),
+            cfg.cache.price_ttl_seconds,
+            cfg.cache.chain_ttl_seconds,
+        ))
+    };
     let strats = Arc::new(all_strategies());
     let rfr = cfg.scanner.risk_free_rate;
     let strat_cfg = cfg.strategies.clone();

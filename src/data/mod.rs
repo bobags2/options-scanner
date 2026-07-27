@@ -3,6 +3,7 @@ pub mod cache;
 pub mod rate_limit;
 pub mod persist;
 pub mod earnings;
+pub mod tradier;
 
 use crate::types::OptionChain;
 use async_trait::async_trait;
@@ -20,3 +21,4 @@ pub trait DataProvider: Send + Sync {
 
 pub use yahoo::YahooProvider;
 pub use cache::CachedProvider;
+pub use tradier::TradierProvider;
