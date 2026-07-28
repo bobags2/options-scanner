@@ -369,6 +369,22 @@ async fn run_scan(tickers: &[String], top_n: usize, cfg: &Config, output: Option
         println!();
     }
 
+    // Show aggregate Greeks across the top-N results. Gamma is broken out
+    // per-ticker since cross-ticker gamma sums are not meaningful.
+    {
+        use options_scanner::math::{aggregate_greeks, format_greeks_summary, gamma_by_ticker, format_gamma_breakdown};
+        let top_slice: Vec<_> = all_opps.iter().take(top_n).cloned().collect();
+        let rollup = aggregate_greeks(&top_slice);
+        let gamma_map = gamma_by_ticker(&top_slice);
+        println!("Net Greeks (top {}):", top_slice.len());
+        println!("  {}", format_greeks_summary(&rollup));
+        let gamma_line = format_gamma_breakdown(&gamma_map);
+        if !gamma_line.is_empty() {
+            println!("  Γ by ticker: {}", gamma_line);
+        }
+        println!();
+    }
+
     if let Ok(conn) = options_scanner::data::persist::init_db(&cfg.cache.sqlite_path) {
         if let Ok(n) = options_scanner::data::persist::save_opportunities(&conn, &all_opps) {
             println!("Saved {} results to {}", n, cfg.cache.sqlite_path.display());
