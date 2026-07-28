@@ -133,6 +133,7 @@ struct TradierContract {
     #[serde(default, rename = "option_type")]
     opt_type: String,
     #[serde(default, rename = "expiration_date")]
+    #[allow(dead_code)]
     expiration_date: String,
 }
 
