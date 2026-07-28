@@ -229,6 +229,7 @@ impl Default for ApiConfig {
         ApiConfig {
             tradier_api_key: None,
             alpha_vantage_api_key: None,
+            tradier_sandbox: false,
             yahoo_requests_per_hour: default_yahoo_rate_limit(),
             tradier_requests_per_hour: default_tradier_rate_limit(),
         }

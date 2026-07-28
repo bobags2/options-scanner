@@ -149,7 +149,7 @@ async fn scan_tickers_with_progress(
         all
     };
     if strats.is_empty() {
-        let valid: Vec<&str> = all_strategies().iter().map(|s| s.name()).collect();
+        let valid: Vec<String> = all_strategies().iter().map(|s| s.name().to_string()).collect();
         tracing::warn!("No strategies match filter '{}'. Available: {:?}", strategy_filter.as_deref().unwrap_or(""), valid);
         return Vec::new();
     }

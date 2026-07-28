@@ -22,7 +22,7 @@ use std::collections::HashMap;
 /// `gamma_by_ticker` for the per-underlying breakdown.
 pub fn aggregate_greeks(opps: &[Opportunity]) -> Greeks {
     let mut delta = 0.0;
-    let mut gamma = 0.0; // kept at 0 — see doc comment
+    let gamma = 0.0; // kept at 0 — see doc comment
     let mut theta = 0.0;
     let mut vega = 0.0;
     let mut rho = 0.0;
@@ -60,7 +60,9 @@ pub fn format_gamma_breakdown(by_ticker: &HashMap<String, f64>) -> String {
     entries.sort_by(|a, b| a.0.cmp(b.0));
     entries
         .into_iter()
-        .filter(|(_, &g)| g.abs() > 1e-6)
+        .filter(|(_, g)| (*g).abs() > 1e-6)
         .map(|(t, g)| format!("{}:{:.4}", t, g))
         .collect::<Vec<_>>()
         .join("  ")
+
+}
